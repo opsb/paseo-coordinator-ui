@@ -59,6 +59,12 @@ export function DeckScreen({ theme, layout, host, navigation }: PluginScreenProp
   lastIndex.current = index;
   const current = entries[index] ?? null;
 
+  // A new card starts at its top, wherever the last one was scrolled to.
+  const scroller = useRef<ScrollView>(null);
+  useEffect(() => {
+    scroller.current?.scrollTo({ y: 0, animated: false });
+  }, [current?.card.key]);
+
   // Once the inbox no longer lists a hidden card, the mark has done its work.
   useEffect(() => {
     const listed = new Set(flattenDeck(deck).map((entry) => entry.card.key));
@@ -192,6 +198,7 @@ export function DeckScreen({ theme, layout, host, navigation }: PluginScreenProp
       </View>
 
       <ScrollView
+        ref={scroller}
         style={{ flex: 1 }}
         contentContainerStyle={{
           padding: compact ? 16 : 24,
