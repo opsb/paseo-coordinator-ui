@@ -47,7 +47,6 @@ export function CardView({
   scope,
   showProject,
   position,
-  sent,
   actions,
 }: {
   colors: Colors;
@@ -56,8 +55,6 @@ export function CardView({
   scope: Scope;
   showProject: boolean;
   position: { index: number; count: number };
-  /** The reply already sent for this card, while the coordinator has yet to close it. */
-  sent: string | null;
   actions: CardActions;
 }) {
   const [words, setWords] = useState("");
@@ -88,7 +85,10 @@ export function CardView({
     >
       <View style={{ gap: 6 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Text style={{ color: colors.foreground, fontSize: 20, lineHeight: 26, fontWeight: "700", flex: 1 }} numberOfLines={2}>
+          <Text
+            style={{ color: colors.foreground, fontSize: 20, lineHeight: 26, fontWeight: "700", flex: 1 }}
+            numberOfLines={2}
+          >
             {card.motif ? `${card.motif} ${card.stream}` : card.stream}
           </Text>
           <Pill colors={colors} label={KIND_LABEL[card.kind] ?? card.kind} tone={kindTone(card.kind)} />
@@ -114,8 +114,12 @@ export function CardView({
                 style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
               >
                 <Icon name="ExternalLink" size={13} color={colors.accent} />
-                <Text style={{ color: colors.accent, fontSize: 14, lineHeight: 20, fontWeight: "600" }}>{link.label}</Text>
-                {link.state ? <Text style={{ color: colors.foregroundMuted, fontSize: 13, lineHeight: 20 }}>{link.state}</Text> : null}
+                <Text style={{ color: colors.accent, fontSize: 14, lineHeight: 20, fontWeight: "600" }}>
+                  {link.label}
+                </Text>
+                {link.state ? (
+                  <Text style={{ color: colors.foregroundMuted, fontSize: 13, lineHeight: 20 }}>{link.state}</Text>
+                ) : null}
               </Pressable>
             ))}
           </View>
@@ -166,73 +170,100 @@ export function CardView({
         </Body>
       ) : null}
 
-      {sent ? (
-        <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, gap: 4 }}>
-          <Text style={{ color: colors.statusSuccess, fontSize: 15, lineHeight: 21, fontWeight: "600" }}>Sent: {sent}</Text>
-          <Body colors={colors} muted>
-            The coordinator closes the card once it has passed your answer on.
-          </Body>
+      <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, gap: 12 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {primary.map((option) => (
+            <Button
+              key={option.word}
+              colors={colors}
+              variant="primary"
+              label={option.label}
+              hint={option.hint}
+              onPress={() => actions.answer(option.word)}
+              testID={`reply-${option.word}`}
+            />
+          ))}
+          {DEFER_OPTIONS.map((option) => (
+            <Button
+              key={option.word}
+              colors={colors}
+              label={option.label}
+              hint={option.hint}
+              onPress={() => actions.answer(option.word)}
+            />
+          ))}
+          <Button
+            colors={colors}
+            label="Remind…"
+            hint="at a time you give"
+            onPress={() => setReminding((open) => !open)}
+          />
         </View>
-      ) : (
-        <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, gap: 12 }}>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {primary.map((option) => (
-              <Button
-                key={option.word}
-                colors={colors}
-                variant="primary"
-                label={option.label}
-                hint={option.hint}
-                onPress={() => actions.answer(option.word)}
-                testID={`reply-${option.word}`}
-              />
-            ))}
-            {DEFER_OPTIONS.map((option) => (
-              <Button key={option.word} colors={colors} label={option.label} hint={option.hint} onPress={() => actions.answer(option.word)} />
-            ))}
-            <Button colors={colors} label="Remind…" hint="at a time you give" onPress={() => setReminding((open) => !open)} />
-          </View>
 
-          {reminding ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <TextInput
-                accessibilityLabel="When to be reminded"
-                value={when}
-                onChangeText={setWhen}
-                placeholder="tomorrow · Monday · at 3"
-                placeholderTextColor={colors.foregroundMuted}
-                onSubmitEditing={() => when.trim() && actions.answer(remindReply(when))}
-                returnKeyType="send"
-                style={inputStyle(colors)}
-              />
-              <Button colors={colors} variant="primary" label="Remind" disabled={!when.trim()} onPress={() => actions.answer(remindReply(when))} />
-            </View>
-          ) : null}
-
+        {reminding ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <TextInput
-              accessibilityLabel="Reply in your own words"
-              value={words}
-              onChangeText={setWords}
-              placeholder="Or reply in your own words"
+              accessibilityLabel="When to be reminded"
+              value={when}
+              onChangeText={setWhen}
+              placeholder="tomorrow · Monday · at 3"
               placeholderTextColor={colors.foregroundMuted}
-              onSubmitEditing={() => words.trim() && actions.answer(words)}
+              onSubmitEditing={() => when.trim() && actions.answer(remindReply(when))}
               returnKeyType="send"
               style={inputStyle(colors)}
             />
-            <Button colors={colors} variant="primary" label="Send" disabled={!words.trim()} onPress={() => actions.answer(words)} />
+            <Button
+              colors={colors}
+              variant="primary"
+              label="Remind"
+              disabled={!when.trim()}
+              onPress={() => actions.answer(remindReply(when))}
+            />
           </View>
+        ) : null}
 
-          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-            {CHAT_OPTIONS.map((option) => (
-              <Button key={option.word} colors={colors} variant="quiet" label={option.label} hint={option.hint} onPress={() => actions.askInChat(option.word)} />
-            ))}
-            {actions.openSession ? (
-              <Button colors={colors} variant="quiet" icon="SquareArrowOutUpRight" label="Open session" onPress={actions.openSession} />
-            ) : null}
-          </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TextInput
+            accessibilityLabel="Reply in your own words"
+            value={words}
+            onChangeText={setWords}
+            placeholder="Or reply in your own words"
+            placeholderTextColor={colors.foregroundMuted}
+            onSubmitEditing={() => words.trim() && actions.answer(words)}
+            returnKeyType="send"
+            style={inputStyle(colors)}
+          />
+          <Button
+            colors={colors}
+            variant="primary"
+            label="Send"
+            disabled={!words.trim()}
+            onPress={() => actions.answer(words)}
+          />
         </View>
-      )}
+
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+          {CHAT_OPTIONS.map((option) => (
+            <Button
+              key={option.word}
+              colors={colors}
+              variant="quiet"
+              label={option.label}
+              hint={option.hint}
+              onPress={() => actions.askInChat(option.word)}
+            />
+          ))}
+          {actions.openSession ? (
+            <Button
+              colors={colors}
+              variant="quiet"
+              icon="SquareArrowOutUpRight"
+              label="Open session"
+              onPress={actions.openSession}
+            />
+          ) : null}
+        </View>
+      </View>
     </View>
   );
 }

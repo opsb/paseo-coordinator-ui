@@ -92,3 +92,10 @@ export const watchDeck = defineRpc({
   input: z.object({ sinceRevision: z.number() }),
   output: DeckSchema,
 });
+
+/** Ticks a card off in the inbox once its reply has reached the coordinator. */
+export const closeCard = defineRpc({
+  name: "coordinator.card.close",
+  input: z.object({ scope: z.string(), key: z.string() }),
+  output: z.object({ outcome: z.enum(["closed", "already-closed", "not-found", "no-inbox"]) }),
+});

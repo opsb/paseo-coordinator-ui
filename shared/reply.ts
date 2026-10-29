@@ -51,12 +51,21 @@ export interface CardRef {
   stream: string;
   sessionId: string;
   key: string;
+  /** The card's ask, so the coordinator can relay without the report, which leaves with the card. */
+  ask: string;
 }
 
 export const REPLY_HEADER = "[card reply]";
 
-/** One message, the card first and the reply on its own line, so the coordinator closes the right card. */
+/**
+ * One message: the card it answers, the ask, and the reply on its own line. The deck ticks the card
+ * off in the inbox as it sends, so the coordinator relays from this message alone.
+ */
 export function composeReply(card: CardRef, reply: string): string {
   const name = card.motif ? `${card.motif} ${card.stream}` : card.stream;
-  return `${REPLY_HEADER} ${name} · session ${card.sessionId} · card ${card.key}\n${reply.trim()}`;
+  return [
+    `${REPLY_HEADER} ${name} · session ${card.sessionId} · card ${card.key} (already ticked off in the inbox)`,
+    `Asked: ${card.ask}`,
+    `Reply: ${reply.trim()}`,
+  ].join("\n");
 }

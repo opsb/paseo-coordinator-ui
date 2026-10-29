@@ -18,23 +18,30 @@ Requires Paseo 0.12 or newer, and paseo-coordinator on the machine that runs the
   coordinator's chat, where it answers.
 - **Chat.** The header's Chat button opens the coordinator session; Open session opens the session
   the card is about.
+- **Gone on press.** A reply hides the card at once. The daemon then ticks it off in the inbox, so it
+  stays gone for every client and across reloads. A send that fails brings the card back.
 - **Live.** The daemon watches the coordinator's inbox files, so a card appears when the inbox worker
-  adds it and leaves when the coordinator ticks it off.
+  adds it and leaves when the coordinator or the deck ticks it off.
 
 ## How a reply reaches the coordinator
 
 The coordinator reads replies from its chat (`y`, `n`, `done`, `park`, `remind <when>`, `skip`,
 `refresher`, `more`, or your own words). The deck sends the same word to the coordinator session as a
-chat message, headed by the card it answers, because the coordinator may have a different card in
-front of it in the chat:
+chat message, headed by the card it answers and its ask, because the coordinator may have a different
+card in front of it in the chat, and because the report behind the card is no longer served once the
+card is ticked off:
 
 ```
-[card reply] 🔑 Google sign-in · session <session-id> · card <key>
-y
+[card reply] 🔑 Google sign-in · session <session-id> · card <key> (already ticked off in the inbox)
+Asked: Ship sign-in now, leave Gmail for later?
+Reply: y
 ```
 
-The coordinator relays the answer, ticks the card off with `inbox.sh done`, and the deck moves on.
-The message is sent with Paseo's `steer` behaviour, so a coordinator mid-relay is not interrupted.
+Once the message is away, the daemon ticks the card off in `inbox.md` itself: it takes the scripts'
+own `<inbox>.lock` directory, flips `[ ]` to `[x]` on the line whose key matches, and changes nothing
+else. The coordinator's later `inbox.sh done` for the same card is then a no-op that also removes the
+report. The message is sent with Paseo's `steer` behaviour, so a coordinator mid-relay is not
+interrupted.
 
 ## What it reads
 
@@ -73,7 +80,7 @@ paseo plugin reload paseo-coordinator-ui
 ```
 
 Tests cover the inbox parser, the report normaliser, the reply message, the state reader and watcher,
-and the session lookup against a fake Paseo API. Seed a throwaway inbox with `COORD_STATE_ROOT`
+the tick-off and its lock, and the session lookup against a fake Paseo API. Seed a throwaway inbox with `COORD_STATE_ROOT`
 pointing at a temporary directory to try the screen without a coordinator.
 
 ## Files
@@ -84,7 +91,8 @@ pointing at a temporary directory to try the screen without a coordinator.
 | `client/deck-screen.tsx` | the deck: position, sending, moving on |
 | `client/card-view.tsx` | one card as a slide, with its replies |
 | `client/use-deck.ts` | one long-poll per host, shared by the sidebar badge and the screen |
-| `index.server.ts` | the `coordinator.deck.watch` RPC |
+| `index.server.ts` | the `coordinator.deck.watch` and `coordinator.card.close` RPCs |
+| `server/close.ts` | ticks a card off in the inbox under the scripts' lock |
 | `server/state.ts` | reads and watches the coordinator's state files |
 | `server/sessions.ts` | the coordinator and the session behind each card, from Paseo |
 | `shared/inbox.ts` | parses inbox lines |

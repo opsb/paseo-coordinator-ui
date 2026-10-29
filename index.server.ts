@@ -1,5 +1,6 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
-import { watchDeck } from "./shared/cards";
+import { closeCard, watchDeck } from "./shared/cards";
+import { closeCard as tickOffCard } from "./server/close";
 import { describeScopes } from "./server/sessions";
 import { createDeckStore, stateRoot } from "./server/state";
 
@@ -29,6 +30,13 @@ export default function contribute(server: PluginServerContext) {
   server.handle(watchDeck, async ({ sinceRevision }, { paseo }) => {
     const { revision, scopes } = await store.waitForChange(sinceRevision, WAIT_MS);
     return { revision, stateRoot: root, scopes: await describeScopes(paseo, scopes) };
+  });
+
+  // The deck has already hidden the card; this makes that true for every client and across reloads.
+  server.handle(closeCard, async ({ scope, key }) => {
+    const outcome = await tickOffCard(root, scope, key);
+    if (outcome === "closed") store.refresh();
+    return { outcome };
   });
 
   return () => {
