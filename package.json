@@ -1,0 +1,35 @@
+{
+  "name": "paseo-coordinator-ui",
+  "version": "0.1.0",
+  "description": "The coordinator's cards as a deck in Paseo: one card at a time, its replies as buttons, and a line to the coordinator chat.",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opsb/paseo-coordinator-ui.git"
+  },
+  "files": [
+    "paseo-plugin.json",
+    "OVERVIEW.md",
+    "index.client.tsx",
+    "index.server.ts",
+    "client/",
+    "server/",
+    "shared/"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@getpaseo/plugin": "0.12.0",
+    "@tanstack/react-query": "^5.90.11",
+    "@types/node": "^22.20.1",
+    "@types/react": "~19.2.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12",
+    "zod": "^4.4.3"
+  }
+}

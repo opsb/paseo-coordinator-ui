@@ -1,0 +1,9 @@
+{
+  "id": "paseo-coordinator-ui",
+  "name": "Coordinator",
+  "description": "The coordinator's cards as a deck: one card at a time, its replies as buttons, and a line to the coordinator chat.",
+  "media": [],
+  "requirements": {
+    "paseo": ">=0.12.0"
+  }
+}
