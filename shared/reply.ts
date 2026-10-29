@@ -69,3 +69,21 @@ export function composeReply(card: CardRef, reply: string): string {
     `Reply: ${reply.trim()}`,
   ].join("\n");
 }
+
+export const CHAT_HEADER = "[card chat]";
+
+/** The card as the coordinator names it: motif and stream. */
+export function cardName(card: Pick<CardRef, "motif" | "stream">): string {
+  return card.motif ? `${card.motif} ${card.stream}` : card.stream;
+}
+
+/**
+ * One turn of a chat about a card. The card stays open in the inbox: the coordinator answers in
+ * its chat, and the deck shows that answer under the card until the human resolves it with a reply.
+ */
+export function composeChat(card: CardRef, text: string): string {
+  return [
+    `${CHAT_HEADER} ${cardName(card)} · session ${card.sessionId} · card ${card.key} (still open; the deck shows your answer under it)`,
+    text.trim(),
+  ].join("\n");
+}

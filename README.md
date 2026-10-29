@@ -14,10 +14,12 @@ Requires Paseo 0.12 or newer, and paseo-coordinator on the machine that runs the
   recommendation and evidence, and any project rule that applies. Previous and Next move through the
   deck; dots show where you are and which cards you have answered.
 - **Replies as buttons.** Decide: Yes / No. Do: Done. Accept: Accept / Not yet. Every card: Park,
-  Skip, Remind at a time you type, or your own words. Refresher and More send that word and open the
-  coordinator's chat, where it answers.
-- **Chat.** The header's Chat button opens the coordinator session; Open session opens the session
-  the card is about.
+  Skip, Remind at a time you type, or your own words.
+- **Chat under the card.** Chat opens a thread beneath the card. What you ask goes to the coordinator
+  as a `[card chat]` message naming the card; its answer streams back under the card, and the card
+  stays open until you resolve it with a reply above. Refresher and More ask through the same thread.
+  The header's Chat button opens the coordinator session itself; Open session opens the session the
+  card is about.
 - **Gone on press.** A reply hides the card at once. The daemon then ticks it off in the inbox, so it
   stays gone for every client and across reloads. A send that fails brings the card back.
 - **Live.** The daemon watches the coordinator's inbox files, so a card appears when the inbox worker

@@ -147,13 +147,9 @@ export function DeckScreen({ theme, layout, host, navigation }: PluginScreenProp
     [entries, send, toast],
   );
 
-  const askInChat = useCallback(
-    async (entry: DeckEntry, reply: string) => {
-      if (!(await send(entry, reply))) return;
-      openAgent(entry.scope.coordinator!.agentId);
-    },
-    [send, openAgent],
-  );
+  const keepChatInView = useCallback(() => {
+    scroller.current?.scrollToEnd({ animated: true });
+  }, []);
 
   const coordinator = chatCoordinator(deck, current);
   const status = coordinatorLine(deck);
@@ -247,9 +243,10 @@ export function DeckScreen({ theme, layout, host, navigation }: PluginScreenProp
             position={{ index, count: entries.length }}
             actions={{
               answer: (reply) => void answer(current, index, reply),
-              askInChat: (reply) => void askInChat(current, reply),
               openSession: current.card.session ? () => openAgent(current.card.sessionId) : null,
             }}
+            coordinatorId={current.scope.coordinator?.agentId ?? null}
+            onGrow={keepChatInView}
           />
         ) : null}
 

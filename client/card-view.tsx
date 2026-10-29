@@ -1,10 +1,12 @@
 import { openExternalUrl } from "@getpaseo/plugin/client";
 import { Icon, TextInput } from "@getpaseo/plugin/client/react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { Card, Scope } from "../shared/cards";
 import { CHAT_OPTIONS, DEFER_OPTIONS, primaryOptions, remindReply } from "../shared/reply";
 import { addedAtLabel } from "../shared/time";
+import { CardChat } from "./card-chat";
+import { useThread } from "./threads";
 import { Body, Button, type Colors, Pill, Section } from "./ui";
 
 /** One card as a slide: what the coordinator knows, the ask, and the replies it accepts. */
@@ -12,8 +14,6 @@ import { Body, Button, type Colors, Pill, Section } from "./ui";
 export interface CardActions {
   /** Sends a reply and moves to the next card. */
   answer(reply: string): void;
-  /** Sends a reply the coordinator answers in its chat, then opens the chat. */
-  askInChat(reply: string): void;
   openSession: (() => void) | null;
 }
 
@@ -48,6 +48,8 @@ export function CardView({
   showProject,
   position,
   actions,
+  coordinatorId,
+  onGrow,
 }: {
   colors: Colors;
   compact: boolean;
@@ -56,6 +58,10 @@ export function CardView({
   showProject: boolean;
   position: { index: number; count: number };
   actions: CardActions;
+  /** The coordinator session to chat with about this card, when one is running. */
+  coordinatorId: string | null;
+  /** Called when the chat under the card grows, so the deck can keep it in view. */
+  onGrow?: () => void;
 }) {
   const [words, setWords] = useState("");
   const [reminding, setReminding] = useState(false);
@@ -64,6 +70,11 @@ export function CardView({
   const status = sessionStatus(card);
   const project = card.session?.projectName ?? scope.projectName;
   const primary = primaryOptions(card.kind);
+  const chat = useThread(card, coordinatorId);
+  const grown = chat.thread.messages.length + (chat.thread.busy ? 1 : 0);
+  useEffect(() => {
+    if (chat.isOpen) onGrow?.();
+  }, [chat.isOpen, grown, onGrow]);
 
   const meta = [
     showProject && project ? project : null,
@@ -243,6 +254,17 @@ export function CardView({
         </View>
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+          {coordinatorId ? (
+            <Button
+              colors={colors}
+              variant="quiet"
+              icon="MessageSquare"
+              label={chat.isOpen ? "Close chat" : "Chat"}
+              hint={chat.isOpen ? undefined : "about this card"}
+              onPress={chat.isOpen ? chat.close : chat.open}
+              testID="card-chat"
+            />
+          ) : null}
           {CHAT_OPTIONS.map((option) => (
             <Button
               key={option.word}
@@ -250,7 +272,8 @@ export function CardView({
               variant="quiet"
               label={option.label}
               hint={option.hint}
-              onPress={() => actions.askInChat(option.word)}
+              disabled={!coordinatorId}
+              onPress={() => void chat.send(option.word)}
             />
           ))}
           {actions.openSession ? (
@@ -264,6 +287,10 @@ export function CardView({
           ) : null}
         </View>
       </View>
+
+      {chat.isOpen ? (
+        <CardChat colors={colors} thread={chat.thread} onSend={(text) => void chat.send(text)} onClose={chat.close} />
+      ) : null}
     </View>
   );
 }

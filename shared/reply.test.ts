@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composeReply, primaryOptions, remindReply } from "./reply";
+import { composeChat, composeReply, primaryOptions, remindReply } from "./reply";
 
 const card = { motif: "🔑", stream: "Google sign-in", sessionId: "aaaa", key: "aaaa@h1", ask: "Ship now?" };
 
@@ -28,5 +28,17 @@ describe("primaryOptions", () => {
 describe("remindReply", () => {
   it("prefixes the time", () => {
     expect(remindReply(" tomorrow ")).toBe("remind tomorrow");
+  });
+});
+
+describe("composeChat", () => {
+  it("names the card, says it stays open, then the words", () => {
+    const text = composeChat(
+      { motif: "🔑", stream: "Google sign-in", sessionId: "s1", key: "s1@abc", ask: "Ship now?" },
+      "  what does the rule mean?  ",
+    );
+    expect(text).toBe(
+      "[card chat] 🔑 Google sign-in · session s1 · card s1@abc (still open; the deck shows your answer under it)\nwhat does the rule mean?",
+    );
   });
 });
